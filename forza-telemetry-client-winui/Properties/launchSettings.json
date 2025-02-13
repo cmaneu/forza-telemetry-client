@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "forza-telemetry-client-winui (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "forza-telemetry-client-winui (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}

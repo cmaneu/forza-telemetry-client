@@ -1,0 +1,4 @@
+[submodule "forza-telemetry-bridge"]
+	path = forza-telemetry-bridge
+	url = https://github.com/toolboc/forza-telemetry-bridge.git
+	branch = racingsim
