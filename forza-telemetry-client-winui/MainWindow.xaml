@@ -9,7 +9,7 @@
     mc:Ignorable="d"
     Title="Forza Telemetry Client">
 
-    <Grid>
+    <Grid x:Name="RootGrid">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="100"/>

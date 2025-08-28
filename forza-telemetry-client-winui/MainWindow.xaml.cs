@@ -17,6 +17,7 @@ using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Microsoft.UI.Windowing;
 using Microsoft.UI;
+using Windows.System;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -30,6 +31,7 @@ namespace forza_telemetry_client_winui
     {
         AppWindow m_appWindow;
         //private DispatcherTimer raceOffTimer;
+        private int _fPressCount = 0;
 
         public MainWindow()
         {
@@ -40,6 +42,43 @@ namespace forza_telemetry_client_winui
 
             m_appWindow = GetAppWindowForCurrentWindow();
             m_appWindow.SetPresenter(AppWindowPresenterKind.FullScreen);
+
+            // Listen for key presses anywhere in the window (handled events too)
+            RootGrid.AddHandler(UIElement.KeyDownEvent, new KeyEventHandler(OnRootGridKeyDown), true);
+        }
+
+        private void OnRootGridKeyDown(object sender, KeyRoutedEventArgs e)
+        {
+            // F11 -> Full screen
+            if (e.Key == VirtualKey.F11)
+            {
+                try
+                {
+                    m_appWindow?.SetPresenter(AppWindowPresenterKind.FullScreen);
+                }
+                catch { /* ignore presenter set failures */ }
+                _fPressCount = 0;
+                return;
+            }
+
+            // 10 consecutive 'f' -> Default presenter
+            if (e.Key == VirtualKey.F)
+            {
+                _fPressCount++;
+                if (_fPressCount >= 10)
+                {
+                    try
+                    {
+                        m_appWindow?.SetPresenter(AppWindowPresenterKind.Default);
+                    }
+                    catch { /* ignore presenter set failures */ }
+                    _fPressCount = 0;
+                }
+            }
+            else
+            {
+                _fPressCount = 0;
+            }
         }
 
         private AppWindow GetAppWindowForCurrentWindow()
