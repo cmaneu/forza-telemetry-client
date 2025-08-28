@@ -1,4 +1,5 @@
 ﻿using ForzaBridge.Model;
+using ForzaTelemetryClient.Logging;
 using Microsoft.Identity.Client.TelemetryCore.TelemetryClient;
 using System;
 using System.Collections.Generic;
@@ -50,6 +51,7 @@ namespace ForzaBridge.ViewModel
                         {
                             // Assume the session is over
                             prevDistanceTraveled = 0;
+                            SafeLogger.LogSessionOver(Session?.SessionId);
                             SessionOverEvent?.Invoke(this, EventArgs.Empty);
                         }
                       

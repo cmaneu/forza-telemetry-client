@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
+using ForzaTelemetryClient.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
@@ -33,6 +34,20 @@ namespace forza_telemetry_client_winui
         public App()
         {
             this.InitializeComponent();
+
+            // Global exception logging
+            this.UnhandledException += (sender, e) =>
+            {
+                SafeLogger.LogUnhandledException(e.Exception, e.Handled);
+            };
+
+#if DEBUG && !DISABLE_XAML_GENERATED_BINDING_DEBUG_OUTPUT
+            // Log XAML binding failures
+            this.DebugSettings.BindingFailed += (sender, e) =>
+            {
+                SafeLogger.LogBindingFailed(e.Message);
+            };
+#endif
         }
 
         /// <summary>

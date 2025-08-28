@@ -22,6 +22,7 @@ using Vasters.ForzaBridge.Producer.ForzaMotorsport.Telemetry;
 using Azure.Identity;
 using Azure.Messaging.EventHubs.Producer;
 using Azure;
+using ForzaTelemetryClient.Logging;
 
 namespace ForzaBridge.Model
 {
@@ -93,6 +94,17 @@ namespace ForzaBridge.Model
 
 
 
+            // Emit configuration loaded event (exclude secrets)
+            SafeLogger.LogConfigurationLoaded(
+                AppContext.BaseDirectory + "/config/appsettings.json",
+                ipAddress.ToString(),
+                port,
+                dataMode.ToString(),
+                dataRate,
+                eventHubNamespace,
+                eventHubName,
+                eventEncoding.ToString(),
+                cloudEventEncoding.ToString());
 #nullable enable
             string? eventHubPolicyName = null;
             string? eventHubPolicyKey = null;
@@ -612,6 +624,7 @@ namespace ForzaBridge.Model
         }
     }
 }
+
 
 
 
