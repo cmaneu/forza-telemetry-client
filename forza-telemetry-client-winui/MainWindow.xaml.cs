@@ -312,9 +312,16 @@ namespace forza_telemetry_client_winui
                 StopButton.IsEnabled = true;
                 ModeComboBox.IsEnabled = false;
                 
-                // TODO: Start the selected mode operation
-                // This would need to interact with the TelemetryModel
                 System.Diagnostics.Debug.WriteLine($"Starting {mode} mode with file: {filePath}");
+                
+                if (mode == "Dump")
+                {
+                    await viewModel.StartDumpModeAsync(filePath);
+                }
+                else if (mode == "Replay")
+                {
+                    await viewModel.StartReplayModeAsync(filePath);
+                }
             }
             catch (Exception ex)
             {
@@ -341,13 +348,20 @@ namespace forza_telemetry_client_winui
             {
                 var mode = ((ComboBoxItem)ModeComboBox.SelectedItem)?.Tag?.ToString();
                 
+                System.Diagnostics.Debug.WriteLine($"Stopping {mode} mode");
+                
+                if (mode == "Dump")
+                {
+                    await viewModel.StopDumpAsync();
+                }
+                else if (mode == "Replay")
+                {
+                    viewModel.StopReplay();
+                }
+                
                 StartButton.IsEnabled = true;
                 StopButton.IsEnabled = false;
                 ModeComboBox.IsEnabled = true;
-                
-                // TODO: Stop the current operation
-                // This would need to interact with the TelemetryModel
-                System.Diagnostics.Debug.WriteLine($"Stopping {mode} mode");
             }
             catch (Exception ex)
             {

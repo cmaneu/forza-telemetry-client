@@ -42,18 +42,34 @@ namespace ForzaBridge.Model
 
 
         public TelemetryModel() {
-            InitializeTelemetryAsync();
+            LoadConfiguration();
         }
 
-        private async void InitializeTelemetryAsync()
+        private async Task InitializeTelemetryAsync()
         {
-
-            LoadConfiguration();
-
             // Create a default session
             //Session = new Session("default",null,null);
 
             await StartListening();
+        }
+
+        public async Task StartNormalListening()
+        {
+            await StartListening();
+        }
+
+        public async Task StartDumpMode(string dumpFilePath)
+        {
+            var ipAddress = IPAddress.Parse(Configuration["Settings:ipAddress"]);
+            var port = int.Parse(Configuration["Settings:port"]);
+            var dataRate = int.Parse(Configuration["Settings:dataRate"]);
+            
+            await StartDumpModeAsync(ipAddress, port, dataRate, dumpFilePath);
+        }
+
+        public async Task StartReplayMode(string replayFilePath)
+        {
+            await StartReplayModeAsync(replayFilePath);
         }
 
 
