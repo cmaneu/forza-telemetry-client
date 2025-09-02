@@ -44,6 +44,7 @@
   <ItemGroup>
     <PackageReference Include="Apache.Avro" Version="1.12.0" />
     <PackageReference Include="Azure.Identity" Version="1.13.2" />
+    <PackageReference Include="FlatSharp" Version="7.8.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.2" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.2" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.2" />
@@ -69,6 +70,10 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+  <ItemGroup>
+    <FlatSharpSchema Include="Schema/TelemetryData.fbs" />
+  </ItemGroup>
+
   <ItemGroup>
     <None Update="config\appsettings.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

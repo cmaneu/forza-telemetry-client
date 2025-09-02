@@ -23,6 +23,7 @@ using Azure.Identity;
 using Azure.Messaging.EventHubs.Producer;
 using Azure;
 using ForzaTelemetryClient.Logging;
+using ForzaBridge.Services;
 
 namespace ForzaBridge.Model
 {
@@ -33,6 +34,8 @@ namespace ForzaBridge.Model
         //private static string _sessionId { get; set; }
         //private int prevRaceStatus = -1;
         private Session session;
+        private TelemetryDumpService _dumpService;
+        private TelemetryReplayService _replayService;
 
         public event Action<TelemetryDataSled> SledTelemetryReceieved;
         public event Action<TelemetryDataDash> DashTelemetryReceieved;
@@ -91,6 +94,22 @@ namespace ForzaBridge.Model
             var cloudEventEncoding = Enum.Parse<CloudEventEncoding>(Configuration["Settings:cloudEventEncoding"]);
             var tenantId = Configuration["Settings:tenantId"];
             var carId = Configuration["Settings:carId"];
+            var dumpFilePath = Configuration["Settings:dumpFilePath"] ?? "telemetry_dump.fbs";
+            var replayFilePath = Configuration["Settings:replayFilePath"] ?? "telemetry_replay.fbs";
+
+            // Handle dump mode
+            if (dataMode == DataMode.Dump)
+            {
+                await StartDumpModeAsync(ipAddress, port, dataRate, dumpFilePath);
+                return;
+            }
+
+            // Handle replay mode
+            if (dataMode == DataMode.Replay)
+            {
+                await StartReplayModeAsync(replayFilePath);
+                return;
+            }
 
 
 
@@ -621,6 +640,114 @@ namespace ForzaBridge.Model
                 await producerClient.SendChannelBatchAsync(values, tenantId, carId, channel.Key.ToString(), contentType, formatter);
             }
             Debug.WriteLine($"Sent {totalEventCount} channel events for car {carId}");
+        }
+
+        private async Task StartDumpModeAsync(IPAddress ipAddress, int port, int dataRate, string dumpFilePath)
+        {
+            Debug.WriteLine($"Starting ForzaBridge in DUMP mode, saving to {dumpFilePath}");
+
+            _dumpService = new TelemetryDumpService(dumpFilePath);
+            _dumpService.StartDump();
+
+            try
+            {
+                // Set up the UDP client
+                var udpClient = new UdpClient();
+                udpClient.Client.Bind(new IPEndPoint(ipAddress, port));
+
+                Debug.WriteLine($"Listening for Forza Motorsports telemetry on {ipAddress}:{port} (DUMP MODE)");
+
+                var sledDataSize = typeof(TelemetryDataSled).GetFields().Length * 4;
+                var stopwatch = new Stopwatch();
+                stopwatch.Start();
+
+                while (true)
+                {
+                    try
+                    {
+                        var receivedData = await udpClient.ReceiveAsync();
+                        var effectiveDataMode = (receivedData.Buffer.Length <= sledDataSize) ? DataMode.Sled : DataMode.Dash;
+                        
+                        TelemetryDataSled telemetryData = (effectiveDataMode == DataMode.Dash) ?
+                            ParseTelemetryData<TelemetryDataDash>(receivedData.Buffer, effectiveDataMode) :
+                            ParseTelemetryData<TelemetryDataSled>(receivedData.Buffer, effectiveDataMode);
+
+                        // Dump the telemetry data
+                        _dumpService.DumpTelemetryData(telemetryData, effectiveDataMode, receivedData.Buffer);
+
+                        // Also trigger the normal events for UI updates
+                        SledTelemetryReceieved?.Invoke(telemetryData);
+                        if (telemetryData is TelemetryDataDash dashData)
+                        {
+                            DashTelemetryReceieved?.Invoke(dashData);
+                        }
+
+                        Debug.WriteLine($"Dumped telemetry data: IsRaceOn={telemetryData.IsRaceOn}, Speed={(telemetryData is TelemetryDataDash dash ? dash.Speed : 0)}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"Error in dump mode: {ex.Message}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error starting dump mode: {ex.Message}");
+            }
+        }
+
+        private async Task StartReplayModeAsync(string replayFilePath)
+        {
+            Debug.WriteLine($"Starting ForzaBridge in REPLAY mode, loading from {replayFilePath}");
+
+            try
+            {
+                _replayService = new TelemetryReplayService(replayFilePath);
+
+                // Wire up replay events to trigger the same events as live UDP data
+                _replayService.SledTelemetryReplayed += (telemetryData) =>
+                {
+                    SledTelemetryReceieved?.Invoke(telemetryData);
+                };
+
+                _replayService.DashTelemetryReplayed += (telemetryData) =>
+                {
+                    SledTelemetryReceieved?.Invoke(telemetryData);
+                    DashTelemetryReceieved?.Invoke(telemetryData);
+                };
+
+                await _replayService.LoadReplayFileAsync();
+                Debug.WriteLine("Replay file loaded successfully");
+
+                await _replayService.StartReplayAsync();
+                Debug.WriteLine("Replay completed");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error in replay mode: {ex.Message}");
+            }
+        }
+
+        public async Task StopDumpAsync()
+        {
+            if (_dumpService != null)
+            {
+                await _dumpService.SaveDumpAsync();
+                _dumpService.Dispose();
+                _dumpService = null;
+                Debug.WriteLine("Dump saved and stopped");
+            }
+        }
+
+        public void StopReplay()
+        {
+            if (_replayService != null)
+            {
+                _replayService.StopReplay();
+                _replayService.Dispose();
+                _replayService = null;
+                Debug.WriteLine("Replay stopped");
+            }
         }
     }
 }

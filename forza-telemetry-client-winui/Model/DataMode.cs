@@ -4,6 +4,8 @@
     {
         Sled,
         Dash,
-        Automatic
+        Automatic,
+        Dump,
+        Replay
     }
 }
