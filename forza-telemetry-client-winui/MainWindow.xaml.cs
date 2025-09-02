@@ -18,6 +18,8 @@ using Windows.Foundation.Collections;
 using Microsoft.UI.Windowing;
 using Microsoft.UI;
 using Windows.System;
+using Windows.Storage.Pickers;
+using Windows.Storage;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -45,6 +47,9 @@ namespace forza_telemetry_client_winui
 
             // Listen for key presses anywhere in the window (handled events too)
             RootGrid.AddHandler(UIElement.KeyDownEvent, new KeyEventHandler(OnRootGridKeyDown), true);
+            
+            // Set default mode to Live UDP
+            ModeComboBox.SelectedIndex = 0;
         }
 
         private void OnRootGridKeyDown(object sender, KeyRoutedEventArgs e)
@@ -195,6 +200,182 @@ namespace forza_telemetry_client_winui
             //{
             //    await ShowSetSessionDialog();
             //}
+        }
+
+        private void ModeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            ComboBox comboBox = sender as ComboBox;
+            if (comboBox?.SelectedItem is ComboBoxItem selectedItem)
+            {
+                string mode = selectedItem.Tag?.ToString();
+                
+                if (mode == "Dump" || mode == "Replay")
+                {
+                    FilePathPanel.Visibility = Visibility.Visible;
+                    DumpReplayControls.Visibility = Visibility.Visible;
+                    
+                    // Update default file name based on mode
+                    if (mode == "Dump")
+                    {
+                        FilePathTextBox.Text = $"telemetry_dump_{DateTime.Now:yyyyMMdd_HHmmss}.fbs";
+                    }
+                    else if (mode == "Replay")
+                    {
+                        FilePathTextBox.Text = "telemetry_replay.fbs";
+                    }
+                }
+                else
+                {
+                    FilePathPanel.Visibility = Visibility.Collapsed;
+                    DumpReplayControls.Visibility = Visibility.Collapsed;
+                }
+            }
+        }
+
+        private async void BrowseButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var mode = ((ComboBoxItem)ModeComboBox.SelectedItem)?.Tag?.ToString();
+                
+                if (mode == "Dump")
+                {
+                    // File save picker for dump mode
+                    var savePicker = new FileSavePicker();
+                    var hWnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+                    WinRT.Interop.InitializeWithWindow.Initialize(savePicker, hWnd);
+                    
+                    savePicker.SuggestedFileName = $"telemetry_dump_{DateTime.Now:yyyyMMdd_HHmmss}";
+                    savePicker.FileTypeChoices.Add("FlatBuffer Files", new List<string>() { ".fbs" });
+                    savePicker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
+                    
+                    var file = await savePicker.PickSaveFileAsync();
+                    if (file != null)
+                    {
+                        FilePathTextBox.Text = file.Path;
+                    }
+                }
+                else if (mode == "Replay")
+                {
+                    // File open picker for replay mode
+                    var openPicker = new FileOpenPicker();
+                    var hWnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+                    WinRT.Interop.InitializeWithWindow.Initialize(openPicker, hWnd);
+                    
+                    openPicker.FileTypeFilter.Add(".fbs");
+                    openPicker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
+                    
+                    var file = await openPicker.PickSingleFileAsync();
+                    if (file != null)
+                    {
+                        FilePathTextBox.Text = file.Path;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error browsing files: {ex.Message}");
+                
+                // Show error dialog
+                ContentDialog errorDialog = new ContentDialog
+                {
+                    Title = "Error",
+                    Content = $"Unable to browse files: {ex.Message}",
+                    CloseButtonText = "OK",
+                    XamlRoot = this.Content.XamlRoot
+                };
+                await errorDialog.ShowAsync();
+            }
+        }
+
+        private async void StartButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var mode = ((ComboBoxItem)ModeComboBox.SelectedItem)?.Tag?.ToString();
+                var filePath = FilePathTextBox.Text;
+                
+                if (string.IsNullOrWhiteSpace(filePath))
+                {
+                    ContentDialog errorDialog = new ContentDialog
+                    {
+                        Title = "Error",
+                        Content = "Please specify a file path.",
+                        CloseButtonText = "OK",
+                        XamlRoot = this.Content.XamlRoot
+                    };
+                    await errorDialog.ShowAsync();
+                    return;
+                }
+                
+                StartButton.IsEnabled = false;
+                StopButton.IsEnabled = true;
+                ModeComboBox.IsEnabled = false;
+                
+                System.Diagnostics.Debug.WriteLine($"Starting {mode} mode with file: {filePath}");
+                
+                if (mode == "Dump")
+                {
+                    await viewModel.StartDumpModeAsync(filePath);
+                }
+                else if (mode == "Replay")
+                {
+                    await viewModel.StartReplayModeAsync(filePath);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error starting operation: {ex.Message}");
+                
+                StartButton.IsEnabled = true;
+                StopButton.IsEnabled = false;
+                ModeComboBox.IsEnabled = true;
+                
+                ContentDialog errorDialog = new ContentDialog
+                {
+                    Title = "Error",
+                    Content = $"Unable to start operation: {ex.Message}",
+                    CloseButtonText = "OK",
+                    XamlRoot = this.Content.XamlRoot
+                };
+                await errorDialog.ShowAsync();
+            }
+        }
+
+        private async void StopButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var mode = ((ComboBoxItem)ModeComboBox.SelectedItem)?.Tag?.ToString();
+                
+                System.Diagnostics.Debug.WriteLine($"Stopping {mode} mode");
+                
+                if (mode == "Dump")
+                {
+                    await viewModel.StopDumpAsync();
+                }
+                else if (mode == "Replay")
+                {
+                    viewModel.StopReplay();
+                }
+                
+                StartButton.IsEnabled = true;
+                StopButton.IsEnabled = false;
+                ModeComboBox.IsEnabled = true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error stopping operation: {ex.Message}");
+                
+                ContentDialog errorDialog = new ContentDialog
+                {
+                    Title = "Error",
+                    Content = $"Unable to stop operation: {ex.Message}",
+                    CloseButtonText = "OK",
+                    XamlRoot = this.Content.XamlRoot
+                };
+                await errorDialog.ShowAsync();
+            }
         }
 
     }

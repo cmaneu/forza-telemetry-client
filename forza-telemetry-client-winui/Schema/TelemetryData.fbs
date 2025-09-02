@@ -1,0 +1,113 @@
+namespace ForzaBridge.Schema;
+
+table TelemetryDataSled {
+    is_race_on: int32;
+    timestamp_ms: uint32;
+    engine_max_rpm: float32;
+    engine_idle_rpm: float32;
+    current_engine_rpm: float32;
+    acceleration_x: float32;
+    acceleration_y: float32;
+    acceleration_z: float32;
+    velocity_x: float32;
+    velocity_y: float32;
+    velocity_z: float32;
+    angular_velocity_x: float32;
+    angular_velocity_y: float32;
+    angular_velocity_z: float32;
+    yaw: float32;
+    pitch: float32;
+    roll: float32;
+    normalized_suspension_travel_front_left: float32;
+    normalized_suspension_travel_front_right: float32;
+    normalized_suspension_travel_rear_left: float32;
+    normalized_suspension_travel_rear_right: float32;
+    tire_slip_ratio_front_left: float32;
+    tire_slip_ratio_front_right: float32;
+    tire_slip_ratio_rear_left: float32;
+    tire_slip_ratio_rear_right: float32;
+    wheel_rotation_speed_front_left: float32;
+    wheel_rotation_speed_front_right: float32;
+    wheel_rotation_speed_rear_left: float32;
+    wheel_rotation_speed_rear_right: float32;
+    wheel_on_rumble_strip_front_left: int32;
+    wheel_on_rumble_strip_front_right: int32;
+    wheel_on_rumble_strip_rear_left: int32;
+    wheel_on_rumble_strip_rear_right: int32;
+    wheel_in_puddle_depth_front_left: float32;
+    wheel_in_puddle_depth_front_right: float32;
+    wheel_in_puddle_depth_rear_left: float32;
+    wheel_in_puddle_depth_rear_right: float32;
+    surface_rumble_front_left: float32;
+    surface_rumble_front_right: float32;
+    surface_rumble_rear_left: float32;
+    surface_rumble_rear_right: float32;
+    tire_slip_angle_front_left: float32;
+    tire_slip_angle_front_right: float32;
+    tire_slip_angle_rear_left: float32;
+    tire_slip_angle_rear_right: float32;
+    tire_combined_slip_front_left: float32;
+    tire_combined_slip_front_right: float32;
+    tire_combined_slip_rear_left: float32;
+    tire_combined_slip_rear_right: float32;
+    suspension_travel_meters_front_left: float32;
+    suspension_travel_meters_front_right: float32;
+    suspension_travel_meters_rear_left: float32;
+    suspension_travel_meters_rear_right: float32;
+    car_ordinal: int32;
+    car_class: int32;
+    car_performance_index: int32;
+    drivetrain_type: int32;
+    num_cylinders: int32;
+}
+
+table TelemetryDataDash {
+    base_data: TelemetryDataSled;
+    position_x: float32;
+    position_y: float32;
+    position_z: float32;
+    speed: float32;
+    power: float32;
+    torque: float32;
+    tire_temp_front_left: float32;
+    tire_temp_front_right: float32;
+    tire_temp_rear_left: float32;
+    tire_temp_rear_right: float32;
+    boost: float32;
+    fuel: float32;
+    distance_traveled: float32;
+    best_lap: float32;
+    last_lap: float32;
+    current_lap: float32;
+    current_race_time: float32;
+    lap_number: uint16;
+    race_position: uint8;
+    accel: uint8;
+    brake: uint8;
+    clutch: uint8;
+    hand_brake: uint8;
+    gear: uint8;
+    steer: int8;
+    normalized_driving_line: int8;
+    normalized_ai_brake_difference: int8;
+    tire_wear_front_left: float32;
+    tire_wear_front_right: float32;
+    tire_wear_rear_left: float32;
+    tire_wear_rear_right: float32;
+    track_ordinal: int32;
+}
+
+table TelemetryRecord {
+    timestamp_millis: uint64;
+    data_mode: uint8; // 0 = Sled, 1 = Dash
+    raw_data: [uint8];
+    sled_data: TelemetryDataSled;
+    dash_data: TelemetryDataDash;
+}
+
+table TelemetrySession {
+    start_timestamp: uint64;
+    records: [TelemetryRecord];
+}
+
+root_type TelemetrySession;
