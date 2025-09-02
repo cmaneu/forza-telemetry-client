@@ -36,6 +36,16 @@ namespace ForzaBridge.Model
 
         public event Action<TelemetryDataSled> SledTelemetryReceieved;
         public event Action<TelemetryDataDash> DashTelemetryReceieved;
+        public event Action EventHubStatusChanged;
+
+        // EventHub status tracking
+        public string EventHubNamespace { get; private set; }
+        public string EventHubName { get; private set; }  
+        public string EventHubAddress => !string.IsNullOrEmpty(EventHubNamespace) && !string.IsNullOrEmpty(EventHubName) 
+            ? $"{EventHubNamespace}/{EventHubName}" : "Not configured";
+        public DateTime LastEventSentTime { get; private set; } = DateTime.MinValue;
+        public bool IsEventHubConfigured { get; private set; }
+        public bool HasSentEvents => LastEventSentTime != DateTime.MinValue;
 
 
         public TelemetryModel() {
@@ -92,6 +102,13 @@ namespace ForzaBridge.Model
             var tenantId = Configuration["Settings:tenantId"];
             var carId = Configuration["Settings:carId"];
 
+            // Update EventHub status tracking
+            EventHubNamespace = eventHubNamespace;
+            EventHubName = eventHubName;
+            IsEventHubConfigured = !string.IsNullOrEmpty(eventHubNamespace) && !string.IsNullOrEmpty(eventHubName) ||
+                                   !string.IsNullOrEmpty(eventHubConnectionString);
+            EventHubStatusChanged?.Invoke();
+
 
 
             // Emit configuration loaded event (exclude secrets)
@@ -114,8 +131,16 @@ namespace ForzaBridge.Model
             if (eventHubConnectionString != null)
             {
                 var csProps = EventHubsConnectionStringProperties.Parse(eventHubConnectionString);
-                if (csProps.FullyQualifiedNamespace != null && eventHubNamespace == null) eventHubNamespace = csProps.Endpoint.Host;
-                if (csProps.EventHubName != null && eventHubName == null) eventHubName = csProps.EventHubName;
+                if (csProps.FullyQualifiedNamespace != null && eventHubNamespace == null) 
+                {
+                    eventHubNamespace = csProps.Endpoint.Host;
+                    EventHubNamespace = eventHubNamespace; // Update tracking property
+                }
+                if (csProps.EventHubName != null && eventHubName == null) 
+                {
+                    eventHubName = csProps.EventHubName;
+                    EventHubName = eventHubName; // Update tracking property
+                }
                 if (csProps.SharedAccessKeyName != null) eventHubPolicyName = csProps.SharedAccessKeyName;
                 if (csProps.SharedAccessKey != null) eventHubPolicyKey = csProps.SharedAccessKey;
             }
@@ -348,7 +373,10 @@ namespace ForzaBridge.Model
                         var effectiveLapId = lapId.ToString();
                         var effectiveCarId = (carId != null) ? carId : $"{telemetryData.CarOrdinal}:{telemetryData.CarClass}:{telemetryData.CarPerformanceIndex}";
                         lastSend = timestamp;
-                        _ = Task.Run(async () => await SendChannelData(telemetryProducer, capturedChannelData, startTS, endTS, tenantId, effectiveCarId, session.SessionId, session.Name, session.Email, session.Telephone, effectiveLapId, eventEncodingContentType, formatter));
+                        _ = Task.Run(async () => {
+                            await SendChannelData(telemetryProducer, capturedChannelData, startTS, endTS, tenantId, effectiveCarId, session.SessionId, session.Name, session.Email, session.Telephone, effectiveLapId, eventEncodingContentType, formatter);
+                            UpdateLastSentTime();
+                        });
                     }
 
                 }
@@ -621,6 +649,12 @@ namespace ForzaBridge.Model
                 await producerClient.SendChannelBatchAsync(values, tenantId, carId, channel.Key.ToString(), contentType, formatter);
             }
             Debug.WriteLine($"Sent {totalEventCount} channel events for car {carId}");
+        }
+
+        private void UpdateLastSentTime()
+        {
+            LastEventSentTime = DateTime.UtcNow;
+            EventHubStatusChanged?.Invoke();
         }
     }
 }

@@ -10,14 +10,20 @@
     Title="Forza Telemetry Client">
 
     <Grid x:Name="RootGrid">
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="100"/>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
-        <Grid.Background>
-            <ImageBrush Stretch="UniformToFill" ImageSource="/Assets/TarmacBackground.png" AlignmentY="Center" AlignmentX="Center"/>
-        </Grid.Background>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="100"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Grid.Background>
+                <ImageBrush Stretch="UniformToFill" ImageSource="/Assets/TarmacBackground.png" AlignmentY="Center" AlignmentX="Center"/>
+            </Grid.Background>
 
 
         <Viewbox Grid.Column="0">
@@ -127,6 +133,23 @@
                 </Polygon>
             </RelativePanel>
         </Viewbox>
+        
+        <!-- EventStream Status Bar -->
+        <Border Grid.Row="1" Background="Black" Height="30">
+            <Grid>
+                <TextBlock Text="{x:Bind Path=viewModel.EventHubStatus, Mode=OneWay}" 
+                           Foreground="White" 
+                           VerticalAlignment="Center" 
+                           HorizontalAlignment="Left" 
+                           Margin="10,0,0,0"
+                           FontFamily="Segoe UI" 
+                           FontSize="12">
+                    <ToolTipService.ToolTip>
+                        <ToolTip Content="{x:Bind Path=viewModel.EventHubAddress, Mode=OneWay}"/>
+                    </ToolTipService.ToolTip>
+                </TextBlock>
+            </Grid>
+        </Border>
 
 
     </Grid>
