@@ -1,7 +1,9 @@
 ﻿using ForzaBridge.Model;
 using ForzaTelemetryClient.Logging;
 using Microsoft.Identity.Client.TelemetryCore.TelemetryClient;
+using Microsoft.UI;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Media;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -188,7 +190,27 @@ namespace ForzaBridge.ViewModel
                     return "Connected";
                 
                 var timeSinceLastSend = DateTime.UtcNow - model.LastEventSentTime;
-                return timeSinceLastSend.TotalMinutes <= 1 ? "Sending" : "Idle";
+                var messageCount = model.MessagesInLastMinute;
+                var baseStatus = timeSinceLastSend.TotalMinutes <= 1 ? "Sending" : "Idle";
+                
+                return $"{baseStatus} ({messageCount} msgs/min)";
+            }
+        }
+        
+        public SolidColorBrush EventHubStatusColor
+        {
+            get
+            {
+                if (!model.IsEventHubConfigured)
+                    return new SolidColorBrush(Colors.Red);
+                
+                if (!model.HasSentEvents)
+                    return new SolidColorBrush(Colors.Yellow);
+                
+                var timeSinceLastSend = DateTime.UtcNow - model.LastEventSentTime;
+                return timeSinceLastSend.TotalMinutes <= 1 
+                    ? new SolidColorBrush(Colors.Green)
+                    : new SolidColorBrush(Colors.Gray);
             }
         }
 
@@ -201,6 +223,7 @@ namespace ForzaBridge.ViewModel
             statusTimer.Tick += (sender, e) => 
             {
                 OnPropertyChanged(nameof(EventHubStatus));
+                OnPropertyChanged(nameof(EventHubStatusColor));
             };
             statusTimer.Start();
         }
@@ -208,6 +231,7 @@ namespace ForzaBridge.ViewModel
         private void OnEventHubStatusChanged()
         {
             OnPropertyChanged(nameof(EventHubStatus));
+            OnPropertyChanged(nameof(EventHubStatusColor));
             OnPropertyChanged(nameof(EventHubAddress));
         }
 

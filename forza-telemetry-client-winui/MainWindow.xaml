@@ -137,17 +137,27 @@
         <!-- EventStream Status Bar -->
         <Border Grid.Row="1" Background="Black" Height="30">
             <Grid>
-                <TextBlock Text="{x:Bind Path=viewModel.EventHubStatus, Mode=OneWay}" 
-                           Foreground="White" 
+                <StackPanel Orientation="Horizontal" 
                            VerticalAlignment="Center" 
                            HorizontalAlignment="Left" 
-                           Margin="10,0,0,0"
-                           FontFamily="Segoe UI" 
-                           FontSize="12">
-                    <ToolTipService.ToolTip>
-                        <ToolTip Content="{x:Bind Path=viewModel.EventHubAddress, Mode=OneWay}"/>
-                    </ToolTipService.ToolTip>
-                </TextBlock>
+                           Margin="10,0,0,0">
+                    <!-- Status indicator circle -->
+                    <Ellipse Width="12" 
+                            Height="12" 
+                            Fill="{x:Bind Path=viewModel.EventHubStatusColor, Mode=OneWay}"
+                            Margin="0,0,8,0"
+                            VerticalAlignment="Center"/>
+                    <!-- Status text -->
+                    <TextBlock Text="{x:Bind Path=viewModel.EventHubStatus, Mode=OneWay}" 
+                              Foreground="White" 
+                              VerticalAlignment="Center" 
+                              FontFamily="Segoe UI" 
+                              FontSize="12">
+                        <ToolTipService.ToolTip>
+                            <ToolTip Content="{x:Bind Path=viewModel.EventHubAddress, Mode=OneWay}"/>
+                        </ToolTipService.ToolTip>
+                    </TextBlock>
+                </StackPanel>
             </Grid>
         </Border>
 

@@ -6,6 +6,7 @@ using Microsoft.Identity.Client.TelemetryCore.TelemetryClient;
 using Microsoft.UI.Xaml;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -46,6 +47,20 @@ namespace ForzaBridge.Model
         public DateTime LastEventSentTime { get; private set; } = DateTime.MinValue;
         public bool IsEventHubConfigured { get; private set; }
         public bool HasSentEvents => LastEventSentTime != DateTime.MinValue;
+        
+        // Message tracking for last minute (memory-efficient)
+        private readonly ConcurrentQueue<DateTime> _messageSentTimes = new ConcurrentQueue<DateTime>();
+        private readonly object _cleanupLock = new object();
+        private DateTime _lastCleanupTime = DateTime.MinValue;
+        
+        public int MessagesInLastMinute
+        {
+            get
+            {
+                CleanupOldMessages();
+                return _messageSentTimes.Count;
+            }
+        }
 
 
         public TelemetryModel() {
@@ -653,8 +668,35 @@ namespace ForzaBridge.Model
 
         private void UpdateLastSentTime()
         {
-            LastEventSentTime = DateTime.UtcNow;
+            var now = DateTime.UtcNow;
+            LastEventSentTime = now;
+            
+            // Add to message tracking queue
+            _messageSentTimes.Enqueue(now);
+            
             EventHubStatusChanged?.Invoke();
+        }
+        
+        private void CleanupOldMessages()
+        {
+            var now = DateTime.UtcNow;
+            
+            // Only cleanup every 30 seconds to avoid excessive processing
+            lock (_cleanupLock)
+            {
+                if (now - _lastCleanupTime < TimeSpan.FromSeconds(30))
+                    return;
+                    
+                _lastCleanupTime = now;
+            }
+            
+            var oneMinuteAgo = now.AddMinutes(-1);
+            
+            // Remove messages older than 1 minute
+            while (_messageSentTimes.TryPeek(out DateTime timestamp) && timestamp < oneMinuteAgo)
+            {
+                _messageSentTimes.TryDequeue(out _);
+            }
         }
     }
 }
