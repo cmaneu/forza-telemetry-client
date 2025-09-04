@@ -99,5 +99,6 @@
     <AppxBundle>Never</AppxBundle>
     <HoursBetweenUpdateChecks>0</HoursBetweenUpdateChecks>
     <PackageCertificateKeyFile>forza-telemetry-client-winui_TemporaryKey.pfx</PackageCertificateKeyFile>
+    <FileVersion>1.1.0.0</FileVersion>
   </PropertyGroup>
 </Project>
