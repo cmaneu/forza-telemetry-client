@@ -40,7 +40,8 @@ jobs:
     runs-on: windows-latest
     outputs: # For accessing them from 'release' job
       app-version: ${{ steps.get-version.outputs.version }}
-      IS_PRE_RELEASE: ${{ env.IS_PRE_RELEASE }}
+      base-version: ${{ steps.get-version.outputs.base-version }}
+      is-prerelease: ${{ steps.get-version.outputs.is-prerelease }}
     strategy:
       matrix:
         platform: [x64, x86, arm64] # Change platform if you want to build only a specific platform
@@ -74,11 +75,58 @@ jobs:
         }
       if: contains(env.IS_CUSTOM_NUGET_SOURCE_ENABLED, 'true')
 
-    # Reading version tag from the csproj file.
-    - uses: kzrnm/get-net-sdk-project-versions-action@v2
-      id: get-version
+    # Determine version based on tags and project file
+    - name: Get project version
+      uses: kzrnm/get-net-sdk-project-versions-action@v2
+      id: get-project-version
       with:
         proj-path: ${{ env.PROJECT_PATH }}
+    
+    - name: Determine final version
+      id: get-version
+      shell: pwsh
+      run: |
+        # Get base version from project file
+        $baseVersion = "${{ steps.get-project-version.outputs.version }}"
+        $versionSuffix = "${{ steps.get-project-version.outputs.version-suffix }}"
+        
+        # Try to get latest tag
+        $latestTag = ""
+        try {
+          $latestTag = git describe --tags --abbrev=0 2>$null
+          if ($LASTEXITCODE -ne 0) { $latestTag = "" }
+        } catch {
+          $latestTag = ""
+        }
+        
+        $finalVersion = $baseVersion
+        $isPreRelease = $false
+        
+        # If we have a version suffix (like alpha, beta, etc.), mark as pre-release
+        if (![string]::IsNullOrEmpty($versionSuffix)) {
+          $finalVersion = "$baseVersion-$versionSuffix"
+          $isPreRelease = $true
+        }
+        # If no tags exist yet, use project version as-is
+        elseif ([string]::IsNullOrEmpty($latestTag)) {
+          Write-Host "No existing tags found, using project version: $finalVersion"
+        }
+        # If latest tag is the same as project version, add build metadata
+        elseif ($latestTag -eq "v$baseVersion") {
+          $commitCount = git rev-list --count HEAD
+          $shortSha = git rev-parse --short HEAD
+          $finalVersion = "$baseVersion+build.$commitCount.sha.$shortSha"
+          Write-Host "Tag already exists for this version, adding build metadata: $finalVersion"
+        }
+        
+        Write-Host "Final version determined: $finalVersion"
+        Write-Host "Is pre-release: $isPreRelease"
+        
+        # Set outputs
+        echo "version=$finalVersion" >> $env:GITHUB_OUTPUT
+        echo "base-version=$baseVersion" >> $env:GITHUB_OUTPUT
+        echo "version-suffix=$versionSuffix" >> $env:GITHUB_OUTPUT
+        echo "is-prerelease=$isPreRelease" >> $env:GITHUB_OUTPUT
     
     # Building with configured commands
     - run: |
@@ -98,22 +146,6 @@ jobs:
         name: artifacts-${{ matrix.platform }}
         path: ${{ env.APP_NAME }}-v${{ steps.get-version.outputs.version }}-${{ matrix.platform }}.zip
 
-    # Checking version suffix for words like [alpha, beta, preview, and experiment]. Marking the release as a pre-release if any exists.
-    - run: |
-        # Define the list of strings
-        $list = @("beta", "alpha", "preview", "experiment")
-
-        # Define the suffix variable
-        $suffix = "${{ steps.get-version.outputs.version-suffix }}"
-
-        foreach ($item in $list) {
-          # Convert both strings to lower case for case-insensitive comparison
-          if ($suffix.ToLower().StartsWith($item.ToLower())) {
-            echo "IS_PRE_RELEASE=true" >> $env:GITHUB_ENV
-            break
-          }
-        }
-
 
   release:
     needs: build
@@ -121,7 +153,8 @@ jobs:
     env:
       # Read some variables from the 'build' job
       APP_VERSION: ${{ needs.build.outputs.app-version }}
-      IS_PRE_RELEASE: ${{ needs.build.outputs.IS_PRE_RELEASE }}
+      BASE_VERSION: ${{ needs.build.outputs.base-version }}
+      IS_PRE_RELEASE: ${{ needs.build.outputs.is-prerelease }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -133,37 +166,62 @@ jobs:
           merge-multiple: true
 
       # Configuring git to create a tag
-      - run: |
+      - name: Create Git Tag
+        run: |
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Actions"
 
-          TAG_NAME="v${{ env.APP_VERSION }}"
+          # Use base version for tag name (without build metadata)
+          TAG_NAME="v${{ env.BASE_VERSION }}"
+          echo "Proposed tag name: $TAG_NAME"
+          
+          # Always fetch tags to check existence
+          git fetch --tags
+          
           if [[ "${{ env.CHECK_TAG_EXISTENCE_BEFORE_CREATING_TAG }}" == "true" ]]; then
-              git fetch --tags
               if [[ $(git tag -l "$TAG_NAME") ]]; then
-                  echo "Tag found (already exist). Skipping to the next step"
+                  echo "Tag $TAG_NAME already exists. Skipping tag creation."
+                  echo "TAG_CREATED=false" >> $GITHUB_ENV
               else
-                  echo "Tag not found, creating new tag"
+                  echo "Tag $TAG_NAME not found, creating new tag"
                   git tag "$TAG_NAME"
                   git push origin "$TAG_NAME"
+                  echo "TAG_CREATED=true" >> $GITHUB_ENV
               fi
           else
-              echo "Creating new tag"
-              git tag "$TAG_NAME"
-              git push origin "$TAG_NAME"
+              # For releases with build metadata, we want to create the release but not necessarily a new tag
+              if [[ "${{ env.APP_VERSION }}" == *"+"* ]]; then
+                  echo "Version contains build metadata. Checking if base tag exists."
+                  if [[ $(git tag -l "$TAG_NAME") ]]; then
+                      echo "Base tag $TAG_NAME already exists. Using existing tag for release."
+                      echo "TAG_CREATED=false" >> $GITHUB_ENV
+                  else
+                      echo "Base tag $TAG_NAME does not exist. Creating new tag."
+                      git tag "$TAG_NAME"
+                      git push origin "$TAG_NAME"
+                      echo "TAG_CREATED=true" >> $GITHUB_ENV
+                  fi
+              else
+                  echo "Creating new tag $TAG_NAME"
+                  git tag "$TAG_NAME"
+                  git push origin "$TAG_NAME"
+                  echo "TAG_CREATED=true" >> $GITHUB_ENV
+              fi
           fi  
+          
+          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV  
           
       # Installing a package for generating a changelog file
       - run: npm install -g auto-changelog  
-      - run: auto-changelog --tag-pattern .+ --commit-limit false --starting-version v${{ env.APP_VERSION }} --ending-version v${{ env.APP_VERSION }} --hide-credit  
+      - run: auto-changelog --tag-pattern .+ --commit-limit false --starting-version ${{ env.TAG_NAME }} --ending-version ${{ env.TAG_NAME }} --hide-credit  
       
       # Creating a Release in GitHub
       - uses: ncipollo/release-action@v1
         with:
           artifacts: "${{ env.APP_NAME }}-v${{ env.APP_VERSION }}-*.zip"
           bodyFile: "CHANGELOG.md"
-          name: v${{ env.APP_VERSION }}
-          tag: v${{ env.APP_VERSION }}
+          name: "v${{ env.APP_VERSION }}"
+          tag: "${{ env.TAG_NAME }}"
           prerelease: ${{ env.IS_PRE_RELEASE }}
           skipIfReleaseExists: ${{ env.SKIP_IF_RELEASE_EXIST }}
           makeLatest: ${{ env.MAKE_LATEST }}
