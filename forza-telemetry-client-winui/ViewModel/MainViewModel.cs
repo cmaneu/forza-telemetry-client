@@ -1,6 +1,9 @@
 ﻿using ForzaBridge.Model;
 using ForzaTelemetryClient.Logging;
 using Microsoft.Identity.Client.TelemetryCore.TelemetryClient;
+using Microsoft.UI;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Media;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -18,6 +21,7 @@ namespace ForzaBridge.ViewModel
     {
 
         private float prevDistanceTraveled = 0;
+        private DispatcherTimer statusTimer;
         
 
 
@@ -156,6 +160,12 @@ namespace ForzaBridge.ViewModel
             // Subscribe to the telemetry received events
             model.SledTelemetryReceieved += (sled) => TelemetryDataSled = sled;
             model.DashTelemetryReceieved += (dash) => TelemetryDataDash = dash;
+            
+            // Subscribe to EventHub status changes
+            model.EventHubStatusChanged += OnEventHubStatusChanged;
+            
+            // Start the status timer
+            StartStatusTimer();
 
             Debug.WriteLine("MainViewModel created");
         }
@@ -167,6 +177,63 @@ namespace ForzaBridge.ViewModel
         }
 
         public event EventHandler SessionOverEvent;
+
+        // EventHub status properties
+        public string EventHubStatus 
+        { 
+            get
+            {
+                if (!model.IsEventHubConfigured)
+                    return "Not configured";
+                
+                if (!model.HasSentEvents)
+                    return "Connected";
+                
+                var timeSinceLastSend = DateTime.UtcNow - model.LastEventSentTime;
+                var messageCount = model.MessagesInLastMinute;
+                var baseStatus = timeSinceLastSend.TotalMinutes <= 1 ? "Sending" : "Idle";
+                
+                return $"{baseStatus} ({messageCount} msgs/min)";
+            }
+        }
+        
+        public SolidColorBrush EventHubStatusColor
+        {
+            get
+            {
+                if (!model.IsEventHubConfigured)
+                    return new SolidColorBrush(Colors.Red);
+                
+                if (!model.HasSentEvents)
+                    return new SolidColorBrush(Colors.Yellow);
+                
+                var timeSinceLastSend = DateTime.UtcNow - model.LastEventSentTime;
+                return timeSinceLastSend.TotalMinutes <= 1 
+                    ? new SolidColorBrush(Colors.Green)
+                    : new SolidColorBrush(Colors.Gray);
+            }
+        }
+
+        public string EventHubAddress => model?.EventHubAddress ?? "Not configured";
+
+        private void StartStatusTimer()
+        {
+            statusTimer = new DispatcherTimer();
+            statusTimer.Interval = TimeSpan.FromSeconds(10); // Update every 10 seconds
+            statusTimer.Tick += (sender, e) => 
+            {
+                OnPropertyChanged(nameof(EventHubStatus));
+                OnPropertyChanged(nameof(EventHubStatusColor));
+            };
+            statusTimer.Start();
+        }
+
+        private void OnEventHubStatusChanged()
+        {
+            OnPropertyChanged(nameof(EventHubStatus));
+            OnPropertyChanged(nameof(EventHubStatusColor));
+            OnPropertyChanged(nameof(EventHubAddress));
+        }
 
 
     }

@@ -1,5 +1,7 @@
+using ForzaBridge.Model;
 using System;
 using System.Diagnostics;
+using System.Net;
 using System.Runtime.CompilerServices;
 
 namespace ForzaTelemetryClient.Logging
@@ -228,5 +230,19 @@ namespace ForzaTelemetryClient.Logging
             _isEnabled = true;
         }
 
+        internal static void LogStartingListening(DataMode dataMode, int dataRate)
+        {
+            EventSource.StartListening(dataMode.ToString(), dataRate);
+        }
+
+        internal static void LogListeningStarted(IPAddress ipAddress, int port)
+        {
+            EventSource.ListeningStarted(ipAddress.ToString(), port);
+        }
+
+        internal static void LogTelemetrySent(string sessionId, string name, string effectiveCarId, string effectiveLapId, long startTS, long endTS)
+        {
+            EventSource.TelemetrySent(sessionId, name, effectiveCarId, effectiveLapId, startTS, endTS);
+        }
     }
 }

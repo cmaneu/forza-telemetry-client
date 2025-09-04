@@ -1,3 +1,4 @@
+using ForzaBridge.Model;
 using System;
 using System.Diagnostics.Tracing;
 using System.Runtime.CompilerServices;
@@ -32,6 +33,8 @@ namespace ForzaTelemetryClient.Logging
             public const int ConfigurationLoaded = 11;
             public const int UnhandledException = 12;
             public const int BindingFailed = 13;
+            public const int StartListeningUDP = 14;
+            public const int ListeningUDP = 15;
         }
 
         [Event(Events.TelemetryPacketReceived, Level = EventLevel.Verbose, Channel = EventChannel.Analytic)]
@@ -156,6 +159,24 @@ namespace ForzaTelemetryClient.Logging
             {
                 WriteEvent(Events.BindingFailed, message ?? "");
             }
+        }
+
+        [Event(Events.StartListeningUDP, Level = EventLevel.Informational)]
+        internal void StartListening(string datamode, int dataRate)
+        {
+            WriteEvent(Events.StartListeningUDP, datamode ?? "unknown", dataRate);
+        }
+
+        [Event(Events.ListeningUDP, Level = EventLevel.Informational)]
+        internal void ListeningStarted(string IPAddress, int port)
+        {
+            WriteEvent(Events.ListeningUDP, IPAddress ?? "unknown", port);
+        }
+
+        [Event(Events.HighFrequencyData, Level = EventLevel.Verbose, Channel = EventChannel.Analytic)]
+        internal void TelemetrySent(string sessionId, string name, string effectiveCarId, string effectiveLapId, long startTS, long endTS)
+        {
+           WriteEvent(Events.HighFrequencyData, sessionId ?? "unknown", name ?? "unknown", effectiveCarId ?? "unknown", effectiveLapId ?? "unknown", startTS, endTS);
         }
     }
 }

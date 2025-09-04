@@ -6,6 +6,7 @@ using Microsoft.Identity.Client.TelemetryCore.TelemetryClient;
 using Microsoft.UI.Xaml;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -36,6 +37,30 @@ namespace ForzaBridge.Model
 
         public event Action<TelemetryDataSled> SledTelemetryReceieved;
         public event Action<TelemetryDataDash> DashTelemetryReceieved;
+        public event Action EventHubStatusChanged;
+
+        // EventHub status tracking
+        public string EventHubNamespace { get; private set; }
+        public string EventHubName { get; private set; }  
+        public string EventHubAddress => !string.IsNullOrEmpty(EventHubNamespace) && !string.IsNullOrEmpty(EventHubName) 
+            ? $"{EventHubNamespace}/{EventHubName}" : "Not configured";
+        public DateTime LastEventSentTime { get; private set; } = DateTime.MinValue;
+        public bool IsEventHubConfigured { get; private set; }
+        public bool HasSentEvents => LastEventSentTime != DateTime.MinValue;
+        
+        // Message tracking for last minute (memory-efficient)
+        private readonly ConcurrentQueue<DateTime> _messageSentTimes = new ConcurrentQueue<DateTime>();
+        private readonly object _cleanupLock = new object();
+        private DateTime _lastCleanupTime = DateTime.MinValue;
+        
+        public int MessagesInLastMinute
+        {
+            get
+            {
+                CleanupOldMessages();
+                return _messageSentTimes.Count;
+            }
+        }
 
 
         public TelemetryModel() {
@@ -92,7 +117,9 @@ namespace ForzaBridge.Model
             var tenantId = Configuration["Settings:tenantId"];
             var carId = Configuration["Settings:carId"];
 
-
+            // Update EventHub status tracking
+            EventHubNamespace = eventHubNamespace;
+            EventHubName = eventHubName;
 
             // Emit configuration loaded event (exclude secrets)
             SafeLogger.LogConfigurationLoaded(
@@ -114,8 +141,16 @@ namespace ForzaBridge.Model
             if (eventHubConnectionString != null)
             {
                 var csProps = EventHubsConnectionStringProperties.Parse(eventHubConnectionString);
-                if (csProps.FullyQualifiedNamespace != null && eventHubNamespace == null) eventHubNamespace = csProps.Endpoint.Host;
-                if (csProps.EventHubName != null && eventHubName == null) eventHubName = csProps.EventHubName;
+                if (csProps.FullyQualifiedNamespace != null && eventHubNamespace == null) 
+                {
+                    eventHubNamespace = csProps.Endpoint.Host;
+                    EventHubNamespace = eventHubNamespace; // Update tracking property
+                }
+                if (csProps.EventHubName != null && eventHubName == null) 
+                {
+                    eventHubName = csProps.EventHubName;
+                    EventHubName = eventHubName; // Update tracking property
+                }
                 if (csProps.SharedAccessKeyName != null) eventHubPolicyName = csProps.SharedAccessKeyName;
                 if (csProps.SharedAccessKey != null) eventHubPolicyKey = csProps.SharedAccessKey;
             }
@@ -141,13 +176,17 @@ namespace ForzaBridge.Model
                     (eventEncoding == EventDataEncoding.AvroJsonGzip) ? "application/vnd.apache.avro+json+gzip" :
                     throw new NotSupportedException($"Unsupported encoding {eventEncoding}");
 
-            Debug.WriteLine($"Starting ForzaBridge with data mode {dataMode} at {dataRate} Hz");
+            IsEventHubConfigured = true;
+            EventHubStatusChanged?.Invoke();
+
+            SafeLogger.LogStartingListening(dataMode, dataRate);
 
             // Set up the UDP client
             var udpClient = new UdpClient();
             udpClient.Client.Bind(new IPEndPoint(ipAddress, port));
 
-            Debug.WriteLine($"Listening for Forza Motorsports telemetry on {ipAddress}:{port}");
+            SafeLogger.LogListeningStarted(ipAddress, port);
+
 
             CloudEventFormatter? formatter = null;
             if (cloudEventEncoding == CloudEventEncoding.JsonStructured)
@@ -348,7 +387,11 @@ namespace ForzaBridge.Model
                         var effectiveLapId = lapId.ToString();
                         var effectiveCarId = (carId != null) ? carId : $"{telemetryData.CarOrdinal}:{telemetryData.CarClass}:{telemetryData.CarPerformanceIndex}";
                         lastSend = timestamp;
-                        _ = Task.Run(async () => await SendChannelData(telemetryProducer, capturedChannelData, startTS, endTS, tenantId, effectiveCarId, session.SessionId, session.Name, session.Email, session.Telephone, effectiveLapId, eventEncodingContentType, formatter));
+                        _ = Task.Run(async () => {
+                            await SendChannelData(telemetryProducer, capturedChannelData, startTS, endTS, tenantId, effectiveCarId, session.SessionId, session.Name, session.Email, session.Telephone, effectiveLapId, eventEncodingContentType, formatter);
+                            SafeLogger.LogTelemetrySent(session.SessionId, session.Name, effectiveCarId, effectiveLapId, startTS, endTS);
+                            UpdateLastSentTime();
+                        });
                     }
 
                 }
@@ -621,6 +664,39 @@ namespace ForzaBridge.Model
                 await producerClient.SendChannelBatchAsync(values, tenantId, carId, channel.Key.ToString(), contentType, formatter);
             }
             Debug.WriteLine($"Sent {totalEventCount} channel events for car {carId}");
+        }
+
+        private void UpdateLastSentTime()
+        {
+            var now = DateTime.UtcNow;
+            LastEventSentTime = now;
+            
+            // Add to message tracking queue
+            _messageSentTimes.Enqueue(now);
+            
+            EventHubStatusChanged?.Invoke();
+        }
+        
+        private void CleanupOldMessages()
+        {
+            var now = DateTime.UtcNow;
+            
+            // Only cleanup every 30 seconds to avoid excessive processing
+            lock (_cleanupLock)
+            {
+                if (now - _lastCleanupTime < TimeSpan.FromSeconds(30))
+                    return;
+                    
+                _lastCleanupTime = now;
+            }
+            
+            var oneMinuteAgo = now.AddMinutes(-1);
+            
+            // Remove messages older than 1 minute
+            while (_messageSentTimes.TryPeek(out DateTime timestamp) && timestamp < oneMinuteAgo)
+            {
+                _messageSentTimes.TryDequeue(out _);
+            }
         }
     }
 }
