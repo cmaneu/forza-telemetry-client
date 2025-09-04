@@ -14,151 +14,141 @@
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
+
         
+        <Grid.Background>
+            <ImageBrush Stretch="UniformToFill" ImageSource="/Assets/TarmacBackground.png" AlignmentY="Center" AlignmentX="Center"/>
+        </Grid.Background>
+
         <Grid Grid.Row="0">
+
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="100"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-            <Grid.Background>
-                <ImageBrush Stretch="UniformToFill" ImageSource="/Assets/TarmacBackground.png" AlignmentY="Center" AlignmentX="Center"/>
-            </Grid.Background>
 
+            <Viewbox Grid.Column="0">
 
-        <Viewbox Grid.Column="0">
+                <Border BorderBrush="Black" BorderThickness="2" Width="500" Height="450" Grid.Column="0" HorizontalAlignment="Center" Margin="30" CornerRadius="15" Background="{ThemeResource AcrylicBrushLight}">
 
-            <Border BorderBrush="Black" BorderThickness="2" Width="500" Height="450" Grid.Column="0" HorizontalAlignment="Center" Margin="30" CornerRadius="15" Background="{ThemeResource AcrylicBrushLight}">
+                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
 
-                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-
-                    <Border CornerRadius="5" Height="40" Background="{ThemeResource AcrylicBrushYellow}" Margin="0,0,0,8">
-                        <TextBlock Text="SESSION DETAILS" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="Black" FontSize="16" FontFamily="Acumin Pro Black"/>
-                    </Border>
-
-                    <Border CornerRadius="5" MinHeight="40" Background="{ThemeResource AcrylicBrushDark}" Margin="0,0,0,5">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="150"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="Session Id" Foreground="White" FontSize="16" FontFamily="Acumin Pro Medium" FontStyle="Normal"/>
-                            <TextBlock Grid.Column="1" VerticalAlignment="Center" Text="{x:Bind Path=viewModel.Session.SessionId, Mode=OneWay}" Foreground="LightGray" FontSize="16" FontFamily="Acumin Pro Medium" FontStyle="Italic"/>
-                        </Grid>
-                    </Border>
-
-                    <Border  CornerRadius="5" Width="450" MinHeight="40" Background="{ThemeResource AcrylicBrushDark}" Margin="0,0,0,5">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="150"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="Session Name" Foreground="White" FontSize="16" FontFamily="Acumin Pro Medium" FontStyle="Normal"/>
-                            <TextBlock  Grid.Column="1" VerticalAlignment="Center" Text="{x:Bind Path=viewModel.Session.Name, Mode=OneWay}" Foreground="LightGray" FontSize="16" FontFamily="Acumin Pro Medium" FontStyle="Italic"/>
-                        </Grid>
-                    </Border>
-
-                    <Border  CornerRadius="5" Width="450" MinHeight="40" Background="{ThemeResource AcrylicBrushDark}" Margin="0,0,0,5">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="150"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="Distance" Foreground="White" FontSize="16" FontFamily="Acumin Pro Medium" FontStyle="Normal"/>
-                            <TextBlock  Grid.Column="1" VerticalAlignment="Center" Text="{x:Bind Path=viewModel.TelemetryDataDash.DistanceTraveled, Mode=OneWay}" Foreground="LightGray" FontSize="16" FontFamily="Acumin Pro Medium" FontStyle="Italic"/>
-                        </Grid>
-                    </Border>
-                    <Grid Width="450">
-
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <Border Grid.Column="0" CornerRadius="5" MinHeight="100" Background="{ThemeResource AcrylicBrushDark}" Margin="0,0,5,5">
-                            <StackPanel Orientation="Vertical">
-                                <TextBlock Margin="0,10" VerticalAlignment="Top" HorizontalAlignment="Center" Text="Lap Number" Foreground="White" FontSize="16" FontFamily="Acumin Pro Medium" FontStyle="Normal"/>
-                                <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" Text="{x:Bind Path=viewModel.TelemetryDataDash.LapNumber, Mode=OneWay}" Foreground="LightGray" FontSize="36" FontFamily="Acumin Pro Medium" FontStyle="Italic"/>
-                            </StackPanel>
+                        <Border CornerRadius="5" Height="40" Background="{ThemeResource AcrylicBrushYellow}" Margin="0,0,0,8">
+                            <TextBlock Text="SESSION DETAILS" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="Black" FontSize="16" FontFamily="Acumin Pro Black"/>
                         </Border>
-                        <Border Grid.Column="1" CornerRadius="5" MinHeight="100" Background="{ThemeResource AcrylicBrushDark}" Margin="0,0,0,5">
-                            <StackPanel Orientation="Vertical">
-                                <TextBlock Margin="0,10" VerticalAlignment="Top" HorizontalAlignment="Center" Text="Lap Timer" Foreground="White" FontSize="16" FontFamily="Acumin Pro Medium" FontStyle="Normal"/>
-                                <TextBlock Margin="0,5" VerticalAlignment="Center" HorizontalAlignment="Center" Text="{x:Bind  Path=viewModel.FormattedCurrentLap, Mode=OneWay}" Foreground="LightGray" FontSize="28" FontFamily="Acumin Pro Medium" FontStyle="Italic"/>
-                            </StackPanel>
-                        </Border>
-                        <Border Grid.Column="2" CornerRadius="5" MinHeight="100" Background="{ThemeResource AcrylicBrushDark}" Margin="5,0,0,5">
-                            <StackPanel Orientation="Vertical">
-                                <TextBlock Margin="0,10" VerticalAlignment="Top" HorizontalAlignment="Center" Text="Last Lap" Foreground="White" FontSize="16" FontFamily="Acumin Pro Medium" FontStyle="Normal"/>
-                                <TextBlock Margin="0,5" VerticalAlignment="Center" HorizontalAlignment="Center" Text="{x:Bind  Path=viewModel.FormattedLastLap, Mode=OneWay}" Foreground="LightGray" FontSize="28" FontFamily="Acumin Pro Medium" FontStyle="Italic"/>
-                            </StackPanel>
-                        </Border>
-                    </Grid>
 
-                    <!--
-                    <Border  CornerRadius="5" Width="450" MinHeight="40" Background="{ThemeResource AcrylicBrushDark}" Margin="0,0,0,5">
-                        <Grid>
+                        <Border CornerRadius="5" MinHeight="40" Background="{ThemeResource AcrylicBrushDark}" Margin="0,0,0,5">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="150"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="Session Id" Foreground="White" FontSize="16" FontFamily="Acumin Pro Medium" FontStyle="Normal"/>
+                                <TextBlock Grid.Column="1" VerticalAlignment="Center" Text="{x:Bind Path=viewModel.Session.SessionId, Mode=OneWay}" Foreground="LightGray" FontSize="16" FontFamily="Acumin Pro Medium" FontStyle="Italic"/>
+                            </Grid>
+                        </Border>
+
+                        <Border  CornerRadius="5" Width="450" MinHeight="40" Background="{ThemeResource AcrylicBrushDark}" Margin="0,0,0,5">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="150"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="Session Name" Foreground="White" FontSize="16" FontFamily="Acumin Pro Medium" FontStyle="Normal"/>
+                                <TextBlock  Grid.Column="1" VerticalAlignment="Center" Text="{x:Bind Path=viewModel.Session.Name, Mode=OneWay}" Foreground="LightGray" FontSize="16" FontFamily="Acumin Pro Medium" FontStyle="Italic"/>
+                            </Grid>
+                        </Border>
+
+                        <Border  CornerRadius="5" Width="450" MinHeight="40" Background="{ThemeResource AcrylicBrushDark}" Margin="0,0,0,5">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="150"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="Distance" Foreground="White" FontSize="16" FontFamily="Acumin Pro Medium" FontStyle="Normal"/>
+                                <TextBlock  Grid.Column="1" VerticalAlignment="Center" Text="{x:Bind Path=viewModel.TelemetryDataDash.DistanceTraveled, Mode=OneWay}" Foreground="LightGray" FontSize="16" FontFamily="Acumin Pro Medium" FontStyle="Italic"/>
+                            </Grid>
+                        </Border>
+                        <Grid Width="450">
+
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="150"/>
-                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="Distance travelled" Foreground="White" FontSize="16" FontFamily="Acumin Pro Medium" FontStyle="Normal"/>
-                            <TextBlock Grid.Column="1" VerticalAlignment="Center" Text="{x:Bind Path=viewModel.TelemetryDataDash.DistanceTraveled, Mode=OneWay}" Foreground="LightGray" FontSize="16" FontFamily="Acumin Pro Medium" FontStyle="Italic"/>
+                            <Border Grid.Column="0" CornerRadius="5" MinHeight="100" Background="{ThemeResource AcrylicBrushDark}" Margin="0,0,5,5">
+                                <StackPanel Orientation="Vertical">
+                                    <TextBlock Margin="0,10" VerticalAlignment="Top" HorizontalAlignment="Center" Text="Lap Number" Foreground="White" FontSize="16" FontFamily="Acumin Pro Medium" FontStyle="Normal"/>
+                                    <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" Text="{x:Bind Path=viewModel.TelemetryDataDash.LapNumber, Mode=OneWay}" Foreground="LightGray" FontSize="36" FontFamily="Acumin Pro Medium" FontStyle="Italic"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Grid.Column="1" CornerRadius="5" MinHeight="100" Background="{ThemeResource AcrylicBrushDark}" Margin="0,0,0,5">
+                                <StackPanel Orientation="Vertical">
+                                    <TextBlock Margin="0,10" VerticalAlignment="Top" HorizontalAlignment="Center" Text="Lap Timer" Foreground="White" FontSize="16" FontFamily="Acumin Pro Medium" FontStyle="Normal"/>
+                                    <TextBlock Margin="0,5" VerticalAlignment="Center" HorizontalAlignment="Center" Text="{x:Bind  Path=viewModel.FormattedCurrentLap, Mode=OneWay}" Foreground="LightGray" FontSize="28" FontFamily="Acumin Pro Medium" FontStyle="Italic"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Grid.Column="2" CornerRadius="5" MinHeight="100" Background="{ThemeResource AcrylicBrushDark}" Margin="5,0,0,5">
+                                <StackPanel Orientation="Vertical">
+                                    <TextBlock Margin="0,10" VerticalAlignment="Top" HorizontalAlignment="Center" Text="Last Lap" Foreground="White" FontSize="16" FontFamily="Acumin Pro Medium" FontStyle="Normal"/>
+                                    <TextBlock Margin="0,5" VerticalAlignment="Center" HorizontalAlignment="Center" Text="{x:Bind  Path=viewModel.FormattedLastLap, Mode=OneWay}" Foreground="LightGray" FontSize="28" FontFamily="Acumin Pro Medium" FontStyle="Italic"/>
+                                </StackPanel>
+                            </Border>
                         </Grid>
-                    </Border> -->
 
-                    <Button Content="NEW SESSION" Margin="0,10" HorizontalAlignment="Center"  Click="SetSessionButton_Click" CornerRadius="5" FontStyle="Normal" FontFamily="Segoe UI Semibold" FontSize="20" IsEnabled="{x:Bind viewModel.IsRaceStopped, Mode=OneWay}"/>
-                </StackPanel>
+                        <Button Content="NEW SESSION" Margin="0,10" HorizontalAlignment="Center"  Click="SetSessionButton_Click" CornerRadius="5" FontStyle="Normal" FontFamily="Segoe UI Semibold" FontSize="20" IsEnabled="{x:Bind viewModel.IsRaceStopped, Mode=OneWay}"/>
+                    </StackPanel>
 
-            </Border>
-        </Viewbox>
+                </Border>
+            </Viewbox>
 
-        <Viewbox Grid.Column="1">
-            <Grid>
-                <Image Source="/Assets/ForzaLogo.svg"/>
-            </Grid>
-        </Viewbox>
+            <Viewbox Grid.Column="1">
+                <Grid>
+                    <Image Source="/Assets/ForzaLogo.svg"/>
+                </Grid>
+            </Viewbox>
 
-        <!--  Right panel with RPM gauge, Gear indicator and speedometer -->
-        <Viewbox Grid.Column="2">
-            <RelativePanel Width="500" Height="500">
-                <Image x:Name="GaugeImage" Width="500" Height="500" Source="/Assets/GaugeBlank.svg" RelativePanel.AlignHorizontalCenterWithPanel="True" RelativePanel.AlignVerticalCenterWithPanel="True"/>
-                <TextBlock Text="{x:Bind Path=viewModel.SpeedKPH, Mode=OneWay}" RelativePanel.AlignBottomWith="GaugeImage" RelativePanel.AlignRightWith="GaugeImage" Margin="0,0,25,10" Foreground="LightGray" FontSize="130" FontFamily="Segoe UI Semibold" FontStyle="Italic"/>
-                <TextBlock Text="{x:Bind Path=viewModel.TelemetryDataDash.Gear, Mode=OneWay}" RelativePanel.AlignHorizontalCenterWithPanel="True" RelativePanel.AlignVerticalCenterWithPanel="True" Margin="0,1,4,0" Foreground="LightBlue" FontSize="55" FontFamily="Segoe UI Semibold" FontStyle="Italic"/>
+            <!--  Right panel with RPM gauge, Gear indicator and speedometer -->
+            <Viewbox Grid.Column="2">
+                <RelativePanel Width="500" Height="500">
+                    <Image x:Name="GaugeImage" Width="500" Height="500" Source="/Assets/GaugeBlank.svg" RelativePanel.AlignHorizontalCenterWithPanel="True" RelativePanel.AlignVerticalCenterWithPanel="True"/>
+                    <TextBlock Text="{x:Bind Path=viewModel.SpeedKPH, Mode=OneWay}" RelativePanel.AlignBottomWith="GaugeImage" RelativePanel.AlignRightWith="GaugeImage" Margin="0,0,25,10" Foreground="LightGray" FontSize="130" FontFamily="Segoe UI Semibold" FontStyle="Italic"/>
+                    <TextBlock Text="{x:Bind Path=viewModel.TelemetryDataDash.Gear, Mode=OneWay}" RelativePanel.AlignHorizontalCenterWithPanel="True" RelativePanel.AlignVerticalCenterWithPanel="True" Margin="0,1,4,0" Foreground="LightBlue" FontSize="55" FontFamily="Segoe UI Semibold" FontStyle="Italic"/>
 
-                <Polygon x:Name="GaugeNeedle" Fill="White" Stroke="Red" StrokeThickness="0" Points="247,244 247,500 242,300 247,300  " RenderTransformOrigin="1,0.5">
-                    <Polygon.RenderTransform>
-                        <RotateTransform x:Name="NeedleRotateTransform" Angle="{x:Bind Path=viewModel.RPMAngle, Mode=OneWay}"/>
-                    </Polygon.RenderTransform>
-                </Polygon>
-            </RelativePanel>
-        </Viewbox>
-        
+                    <Polygon x:Name="GaugeNeedle" Fill="White" Stroke="Red" StrokeThickness="0" Points="247,244 247,500 242,300 247,300  " RenderTransformOrigin="1,0.5">
+                        <Polygon.RenderTransform>
+                            <RotateTransform x:Name="NeedleRotateTransform" Angle="{x:Bind Path=viewModel.RPMAngle, Mode=OneWay}"/>
+                        </Polygon.RenderTransform>
+                    </Polygon>
+                </RelativePanel>
+            </Viewbox>
+
+        </Grid>
+
         <!-- EventStream Status Bar -->
         <Border Grid.Row="1" Background="Black" Height="30">
-            <Grid>
-                <StackPanel Orientation="Horizontal" 
-                           VerticalAlignment="Center" 
-                           HorizontalAlignment="Left" 
-                           Margin="10,0,0,0">
-                    <!-- Status indicator circle -->
+            <StackPanel Orientation="Horizontal" 
+            VerticalAlignment="Center" 
+            HorizontalAlignment="Left" 
+            Margin="10,0,0,0">
+            <!-- Status indicator circle -->
                     <Ellipse Width="12" 
                             Height="12" 
                             Fill="{x:Bind Path=viewModel.EventHubStatusColor, Mode=OneWay}"
                             Margin="0,0,8,0"
-                            VerticalAlignment="Center"/>
-                    <!-- Status text -->
+                            VerticalAlignment="Center"/>    
+                <!-- Status text -->
                     <TextBlock Text="{x:Bind Path=viewModel.EventHubStatus, Mode=OneWay}" 
-                              Foreground="White" 
-                              VerticalAlignment="Center" 
-                              FontFamily="Segoe UI" 
-                              FontSize="12">
-                        <ToolTipService.ToolTip>
-                            <ToolTip Content="{x:Bind Path=viewModel.EventHubAddress, Mode=OneWay}"/>
-                        </ToolTipService.ToolTip>
-                    </TextBlock>
-                </StackPanel>
-            </Grid>
+                            Foreground="White" 
+                            VerticalAlignment="Center" 
+                            FontFamily="Segoe UI" 
+                            FontSize="12">
+                    <ToolTipService.ToolTip>
+                        <ToolTip Content="{x:Bind Path=viewModel.EventHubAddress, Mode=OneWay}"/>
+                    </ToolTipService.ToolTip>
+                </TextBlock>
+            </StackPanel>
         </Border>
 
 

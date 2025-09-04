@@ -120,11 +120,6 @@ namespace ForzaBridge.Model
             // Update EventHub status tracking
             EventHubNamespace = eventHubNamespace;
             EventHubName = eventHubName;
-            IsEventHubConfigured = !string.IsNullOrEmpty(eventHubNamespace) && !string.IsNullOrEmpty(eventHubName) ||
-                                   !string.IsNullOrEmpty(eventHubConnectionString);
-            EventHubStatusChanged?.Invoke();
-
-
 
             // Emit configuration loaded event (exclude secrets)
             SafeLogger.LogConfigurationLoaded(
@@ -181,13 +176,17 @@ namespace ForzaBridge.Model
                     (eventEncoding == EventDataEncoding.AvroJsonGzip) ? "application/vnd.apache.avro+json+gzip" :
                     throw new NotSupportedException($"Unsupported encoding {eventEncoding}");
 
-            Debug.WriteLine($"Starting ForzaBridge with data mode {dataMode} at {dataRate} Hz");
+            IsEventHubConfigured = true;
+            EventHubStatusChanged?.Invoke();
+
+            SafeLogger.LogStartingListening(dataMode, dataRate);
 
             // Set up the UDP client
             var udpClient = new UdpClient();
             udpClient.Client.Bind(new IPEndPoint(ipAddress, port));
 
-            Debug.WriteLine($"Listening for Forza Motorsports telemetry on {ipAddress}:{port}");
+            SafeLogger.LogListeningStarted(ipAddress, port);
+
 
             CloudEventFormatter? formatter = null;
             if (cloudEventEncoding == CloudEventEncoding.JsonStructured)
@@ -390,6 +389,7 @@ namespace ForzaBridge.Model
                         lastSend = timestamp;
                         _ = Task.Run(async () => {
                             await SendChannelData(telemetryProducer, capturedChannelData, startTS, endTS, tenantId, effectiveCarId, session.SessionId, session.Name, session.Email, session.Telephone, effectiveLapId, eventEncodingContentType, formatter);
+                            SafeLogger.LogTelemetrySent(session.SessionId, session.Name, effectiveCarId, effectiveLapId, startTS, endTS);
                             UpdateLastSentTime();
                         });
                     }
