@@ -171,29 +171,6 @@ namespace ForzaBridge.ViewModel
 
         public event EventHandler SessionOverEvent;
 
-        // Expose TelemetryModel dump/replay functionality
-        public TelemetryModel TelemetryModel => model;
-
-        public async Task StartDumpModeAsync(string dumpFilePath)
-        {
-            await model.StartDumpMode(dumpFilePath);
-        }
-
-        public async Task StartReplayModeAsync(string replayFilePath)
-        {
-            await model.StartReplayMode(replayFilePath);
-        }
-
-        public async Task StopDumpAsync()
-        {
-            await model.StopDumpAsync();
-        }
-
-        public void StopReplay()
-        {
-            model.StopReplay();
-        }
-
 
     }
 }

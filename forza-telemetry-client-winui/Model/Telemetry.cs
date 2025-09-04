@@ -55,6 +55,22 @@ namespace ForzaBridge.Model
 
         public async Task StartNormalListening()
         {
+            // Check command line arguments first, then configuration
+            var mode = forza_telemetry_client_winui.App.TelemetryMode;
+            var filePath = forza_telemetry_client_winui.App.TelemetryFilePath;
+
+            if (mode == "Dump")
+            {
+                await StartDumpMode(filePath);
+                return;
+            }
+            else if (mode == "Replay")
+            {
+                await StartReplayMode(filePath);
+                return;
+            }
+
+            // Default to normal UDP listening
             await StartListening();
         }
 
@@ -110,20 +126,19 @@ namespace ForzaBridge.Model
             var cloudEventEncoding = Enum.Parse<CloudEventEncoding>(Configuration["Settings:cloudEventEncoding"]);
             var tenantId = Configuration["Settings:tenantId"];
             var carId = Configuration["Settings:carId"];
-            var dumpFilePath = Configuration["Settings:dumpFilePath"] ?? "telemetry_dump.fbs";
-            var replayFilePath = Configuration["Settings:replayFilePath"] ?? "telemetry_replay.fbs";
+            var telemetryFilePath = Configuration["Settings:telemetryFilePath"] ?? "telemetry_session.fbs";
 
             // Handle dump mode
             if (dataMode == DataMode.Dump)
             {
-                await StartDumpModeAsync(ipAddress, port, dataRate, dumpFilePath);
+                await StartDumpModeAsync(ipAddress, port, dataRate, telemetryFilePath);
                 return;
             }
 
             // Handle replay mode
             if (dataMode == DataMode.Replay)
             {
-                await StartReplayModeAsync(replayFilePath);
+                await StartReplayModeAsync(telemetryFilePath);
                 return;
             }
 

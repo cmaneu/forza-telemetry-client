@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -27,6 +27,9 @@ namespace forza_telemetry_client_winui
     /// </summary>
     public partial class App : Application
     {
+        public static string TelemetryMode { get; private set; } = "Live";
+        public static string TelemetryFilePath { get; private set; } = "";
+
         /// <summary>
         /// Initializes the singleton application object.  This is the first line of authored code
         /// executed, and as such is the logical equivalent of main() or WinMain().
@@ -34,6 +37,9 @@ namespace forza_telemetry_client_winui
         public App()
         {
             this.InitializeComponent();
+
+            // Parse command line arguments
+            ParseCommandLineArguments();
 
             // Global exception logging
             this.UnhandledException += (sender, e) =>
@@ -48,6 +54,52 @@ namespace forza_telemetry_client_winui
                 SafeLogger.LogBindingFailed(e.Message);
             };
 #endif
+        }
+
+        private void ParseCommandLineArguments()
+        {
+            var args = System.Environment.GetCommandLineArgs();
+            
+            for (int i = 1; i < args.Length; i++)
+            {
+                switch (args[i].ToLower())
+                {
+                    case "--mode":
+                        if (i + 1 < args.Length)
+                        {
+                            var mode = args[i + 1].ToLower();
+                            switch (mode)
+                            {
+                                case "dump":
+                                    TelemetryMode = "Dump";
+                                    break;
+                                case "replay":
+                                    TelemetryMode = "Replay";
+                                    break;
+                                default:
+                                    TelemetryMode = "Live";
+                                    break;
+                            }
+                            i++; // Skip next argument since we consumed it
+                        }
+                        break;
+                    case "--file":
+                        if (i + 1 < args.Length)
+                        {
+                            TelemetryFilePath = args[i + 1];
+                            i++; // Skip next argument since we consumed it
+                        }
+                        break;
+                }
+            }
+
+            // Set default file path if not specified
+            if (string.IsNullOrEmpty(TelemetryFilePath))
+            {
+                TelemetryFilePath = TelemetryMode == "Dump" 
+                    ? $"telemetry_dump_{DateTime.Now:yyyyMMdd_HHmmss}.fbs"
+                    : "telemetry_session.fbs";
+            }
         }
 
         /// <summary>

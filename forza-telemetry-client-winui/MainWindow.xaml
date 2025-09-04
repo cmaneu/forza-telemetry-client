@@ -103,43 +103,6 @@
 
                     <Button Content="NEW SESSION" Margin="0,10" HorizontalAlignment="Center"  Click="SetSessionButton_Click" CornerRadius="5" FontStyle="Normal" FontFamily="Segoe UI Semibold" FontSize="20" IsEnabled="{x:Bind viewModel.IsRaceStopped, Mode=OneWay}"/>
 
-                    <!-- Dump/Replay Mode Selection -->
-                    <Border CornerRadius="5" Height="40" Background="{ThemeResource AcrylicBrushYellow}" Margin="0,20,0,8">
-                        <TextBlock Text="TELEMETRY MODE" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="Black" FontSize="16" FontFamily="Acumin Pro Black"/>
-                    </Border>
-
-                    <Border CornerRadius="5" MinHeight="40" Background="{ThemeResource AcrylicBrushDark}" Margin="0,0,0,5">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="150"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="Mode" Foreground="White" FontSize="16" FontFamily="Acumin Pro Medium" FontStyle="Normal"/>
-                            <ComboBox x:Name="ModeComboBox" Grid.Column="1" VerticalAlignment="Center" Margin="10,5" SelectionChanged="ModeComboBox_SelectionChanged">
-                                <ComboBoxItem Content="Live UDP" Tag="Automatic"/>
-                                <ComboBoxItem Content="Dump to File" Tag="Dump"/>
-                                <ComboBoxItem Content="Replay from File" Tag="Replay"/>
-                            </ComboBox>
-                        </Grid>
-                    </Border>
-
-                    <Border x:Name="FilePathPanel" CornerRadius="5" MinHeight="40" Background="{ThemeResource AcrylicBrushDark}" Margin="0,0,0,5" Visibility="Collapsed">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="150"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="File Path" Foreground="White" FontSize="16" FontFamily="Acumin Pro Medium" FontStyle="Normal"/>
-                            <TextBox x:Name="FilePathTextBox" Grid.Column="1" VerticalAlignment="Center" Margin="10,5" Text="telemetry_session.fbs"/>
-                            <Button x:Name="BrowseButton" Grid.Column="2" Content="Browse" Margin="5" Click="BrowseButton_Click" VerticalAlignment="Center"/>
-                        </Grid>
-                    </Border>
-
-                    <StackPanel x:Name="DumpReplayControls" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10" Visibility="Collapsed">
-                        <Button x:Name="StartButton" Content="START" Margin="5" Click="StartButton_Click" CornerRadius="5" FontStyle="Normal" FontFamily="Segoe UI Semibold" FontSize="16"/>
-                        <Button x:Name="StopButton" Content="STOP" Margin="5" Click="StopButton_Click" CornerRadius="5" FontStyle="Normal" FontFamily="Segoe UI Semibold" FontSize="16" IsEnabled="False"/>
-                    </StackPanel>
                 </StackPanel>
 
             </Border>
@@ -165,6 +128,11 @@
                 </Polygon>
             </RelativePanel>
         </Viewbox>
+
+        <!-- Status Bar -->
+        <Border Grid.Column="0" Grid.ColumnSpan="3" VerticalAlignment="Bottom" Background="{ThemeResource AcrylicBrushDark}" Height="30" Margin="10,0,10,10" CornerRadius="5">
+            <TextBlock x:Name="StatusBarText" Text="{x:Bind Path=StatusMessage, Mode=OneWay}" Foreground="White" FontSize="12" VerticalAlignment="Center" Margin="10,0"/>
+        </Border>
 
 
     </Grid>
