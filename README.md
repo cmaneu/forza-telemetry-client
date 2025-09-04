@@ -33,6 +33,21 @@ Select your desired configuration and Build!
  * Run the Desktop application, *forza-telemetry-client-winui.exe*, if prompted by Windows Defender SmartScreen, Click "More Info" => "Run anyway"
  * Launch Forza Motorsport on Xbox or PC, start race and enter *SETTINGS* => *GAMEPLAY & HUD*, set *Data Out* to *On*, set *Data Out IP Address* to the ip address of the machine runing the Desktop Application, set *Data Out IP Port* to 5300, and set *Data Out Packet Format* to *Car Dash*, exit and return to the race, when you accelerate you should see the RPM needle move up and down in the Desktop Application
 
+## Releases and Versioning
+
+This project uses [semantic versioning](https://semver.org/) with automated releases via GitHub Actions. 
+
+* **Stable releases** are available on the [Releases page](https://github.com/cmaneu/forza-telemetry-client/releases)
+* **Version management** is documented in [docs/VERSIONING.md](docs/VERSIONING.md)
+* **Release workflow** automatically creates releases when manually triggered
+
+### Creating a New Release
+
+1. Update the version in `forza-telemetry-client-winui/forza-telemetry-client-winui.csproj`
+2. Use the GitHub Actions "GitHub Release Publisher" workflow to create the release
+3. The workflow will automatically build, package, and publish the release
+
+For more details, see the [versioning documentation](docs/VERSIONING.md).
 
  ## Troubleshooting
 * The app fails to launch: Most likely a misconfiguration in [config/appsettings.json](https://github.com/toolboc/forza-telemetry-client/blob/main/forza-telemetry-client-winui/config/appsettings.json)
